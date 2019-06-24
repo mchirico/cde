@@ -1,0 +1,16 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+  source: {repository: golang}
+
+inputs:
+- name: cde
+  path: gopath/src/gopath/src/github.com/mchirico/cde
+
+caches:
+- path: depspath/
+- path: gopath/pkg/
+
+run:
+  path: gopath/src/gopath/src/github.com/mchirico/cde/ci/unit.sh

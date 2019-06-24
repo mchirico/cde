@@ -1,0 +1,74 @@
+
+resources:
+
+- name: cde
+  type: git
+  source:
+    uri: https://github.com/mchirico/cde.git
+    branch: master
+
+- name: cde-docker-image
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/cde
+
+###############################################################################
+
+jobs:
+
+- name: unit
+  plan:
+  - get: cde
+    trigger: true
+  - task: unit
+    file: cde/ci/unit-task.yml
+
+- name: build
+  plan:
+  - get: cde
+    trigger: true
+    passed: [unit]
+  - task: build
+    file: cde/ci/build-task.yml
+
+- name: inform
+  plan:
+  - get: cde
+    trigger: true
+    passed: [build]
+  - task: inform
+    file: cde/ci/inform-task.yml
+
+- name: docker
+  plan:
+  - get: cde
+    trigger: true
+    passed: [inform]
+  - task: docker
+    file: cde/ci/docker-task.yml
+
+- name: publish
+  plan:
+  - get: cde
+    trigger: true
+    passed: [docker]
+  - put: cde-docker-image
+    params:
+      build: cde/ci/docker
+  - task: run
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: ((docker-hub-username))/cde
+      run:
+        path: /bin/hello-world
+        args: []
+      params:
+        NAME: ((docker-hub-username))
+
+
